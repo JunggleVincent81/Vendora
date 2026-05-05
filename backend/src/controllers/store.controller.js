@@ -1,6 +1,5 @@
 const db = require("../config/db");
 
-// CREATE STORE
 exports.createStore = (req, res) => {
   const userId = req.user.id;
   const { name, description } = req.body;

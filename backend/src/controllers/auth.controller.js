@@ -2,7 +2,6 @@ const db = require("../config/db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// REGISTER
 exports.register = (req, res) => {
   const { name, email, password, role } = req.body;
 
@@ -27,7 +26,6 @@ exports.register = (req, res) => {
 };
 
 
-// LOGIN
 exports.login = (req, res) => {
   const { email, password } = req.body;
 
