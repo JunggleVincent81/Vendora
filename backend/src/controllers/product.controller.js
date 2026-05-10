@@ -1,3 +1,4 @@
+const db = require("../config/db");
 exports.createProduct = (req, res) => {
     const userId = req.user.id;
     const { name, price, stock, category_id, description } = req.body;
