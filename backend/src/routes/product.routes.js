@@ -1,7 +1,9 @@
 const express = require("express");
+const upload = require("../config/multer");
 const router = express.Router();
 
 const controller = require("../controllers/product.controller");
+
 
 const {
   verifyToken,
@@ -13,11 +15,12 @@ router.get("/", controller.getAllProducts);
 
 // SELLER
 router.post(
-  "/",
-  verifyToken,
-  authorize(["seller"]),
-  controller.createProduct
-);
+    "/",
+    verifyToken,
+    authorize(["seller"]),
+    upload.single("image"),
+    controller.createProduct
+  );
 
 router.put(
   "/:id",

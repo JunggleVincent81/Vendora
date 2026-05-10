@@ -1,9 +1,13 @@
-const express = require("express");
-const router = express.Router();
-const controller = require("../controllers/store.controller");
-const { verifyToken, authorize } = require("../middlewares/auth.middleware");
+const router = require("express").Router();
 
-router.post("/", verifyToken, authorize(["seller"]), controller.createStore);
-router.get("/me", verifyToken, authorize(["seller"]), controller.getMyStore);
+const controller = require("../controllers/store.controller");
+
+const { verifyToken } = require("../middlewares/auth.middleware");
+
+// seller request store
+router.post("/", verifyToken, controller.createStoreRequest);
+
+// get my store
+router.get("/me", verifyToken, controller.getMyStore);
 
 module.exports = router;

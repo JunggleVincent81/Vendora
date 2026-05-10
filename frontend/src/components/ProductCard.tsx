@@ -9,6 +9,11 @@ export default function ProductCard({
   product,
   onAdd
 }: ProductCardProps) {
+
+  const imageUrl = product.image
+    ? `http://localhost:5000/uploads/${product.image}`
+    : "/placeholder.png";
+
   return (
     <div
       className="
@@ -35,7 +40,7 @@ export default function ProductCard({
     "
     >
 
-      {/* IMAGE */}
+      {/* IMAGE SECTION */}
       <div
         className="
         relative
@@ -51,34 +56,57 @@ export default function ProductCard({
       "
       >
 
-        {/* FAKE IMAGE PLACEHOLDER */}
+        {/* PRODUCT IMAGE */}
+        <img
+          src={imageUrl}
+          alt={product.name}
+          className="
+            w-full
+            h-full
+            object-cover
+
+            group-hover:scale-110
+
+            transition-transform duration-500
+          "
+        />
+
+        {/* OVERLAY */}
         <div
           className="
           absolute inset-0
 
-          flex items-center justify-center
+          bg-gradient-to-t
+          from-black/10
+          to-transparent
+        "
+        />
+
+        {/* CATEGORY BADGE */}
+        <div
+          className="
+          absolute
+
+          top-5 left-5
+
+          px-4 py-1.5
+
+          rounded-full
+
+          border border-white/20
+
+          bg-white/40
+          backdrop-blur-xl
+
+          text-xs
+          font-semibold
+
+          text-zinc-800
+
+          shadow-lg
         "
         >
-          <div
-            className="
-            w-24 h-24
-
-            rounded-3xl
-
-            bg-white/40
-            backdrop-blur-xl
-
-            border border-white/20
-
-            flex items-center justify-center
-
-            shadow-xl
-          "
-          >
-            <span className="text-4xl">
-              🛍️
-            </span>
-          </div>
+          {product.category_name || "Local Product"}
         </div>
 
         {/* GLOW */}
@@ -103,30 +131,9 @@ export default function ProductCard({
       {/* CONTENT */}
       <div className="p-6">
 
-        {/* CATEGORY */}
-        <div
-          className="
-          inline-flex
-
-          px-4 py-1.5
-
-          rounded-full
-
-          bg-orange-100/70
-
-          text-orange-700
-          text-xs
-          font-semibold
-        "
-        >
-          {product.category_name || "Local Product"}
-        </div>
-
         {/* TITLE */}
         <h2
           className="
-          mt-4
-
           text-2xl
           font-black
 
@@ -149,6 +156,8 @@ export default function ProductCard({
           leading-relaxed
 
           line-clamp-2
+
+          min-h-[44px]
         "
         >
           {product.description ||
@@ -158,15 +167,16 @@ export default function ProductCard({
         {/* STORE */}
         <div
           className="
-          mt-5
+          mt-6
 
           flex items-center gap-3
         "
         >
 
+          {/* STORE ICON */}
           <div
             className="
-            w-10 h-10
+            w-11 h-11
 
             rounded-2xl
 
@@ -185,14 +195,25 @@ export default function ProductCard({
             {product.store_name?.charAt(0) || "S"}
           </div>
 
+          {/* STORE INFO */}
           <div>
+
             <p className="text-sm text-zinc-500">
               Store
             </p>
 
-            <p className="font-semibold text-zinc-800">
+            <p
+              className="
+              font-semibold
+
+              text-zinc-800
+
+              line-clamp-1
+            "
+            >
               {product.store_name || "Vendora Store"}
             </p>
+
           </div>
 
         </div>
@@ -200,9 +221,9 @@ export default function ProductCard({
         {/* FOOTER */}
         <div
           className="
-          mt-7
+          mt-8
 
-          flex items-center justify-between
+          flex items-end justify-between
         "
         >
 
@@ -222,7 +243,7 @@ export default function ProductCard({
               text-zinc-900
             "
             >
-              Rp {product.price}
+              Rp {Number(product.price).toLocaleString("id-ID")}
             </h3>
 
           </div>
@@ -245,6 +266,8 @@ export default function ProductCard({
             shadow-lg
 
             hover:scale-105
+
+            active:scale-95
 
             transition-all
           "
