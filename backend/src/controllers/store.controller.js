@@ -31,25 +31,115 @@ exports.createStoreRequest = (req, res) => {
 
 };
 
+// ==========================
+// GET MY STORE
+// ==========================
 exports.getMyStore = (req, res) => {
+
+  const userId =
+    req.user.id;
+
+  const query = `
+    SELECT *
+    FROM stores
+    WHERE user_id = ?
+    LIMIT 1
+  `;
+
+  db.query(
+    query,
+    [userId],
+    (err, results) => {
+
+      if (err) {
+
+        return res.status(500).json({
+          message:
+            "Error fetching store"
+        });
+
+      }
+
+      if (
+        results.length === 0
+      ) {
+
+        return res.status(404).json({
+          message:
+            "Store not found"
+        });
+
+      }
+
+      res.json(results[0]);
+
+    }
+  );
+
+};
+
+
+// ==========================
+// UPDATE STORE
+// ==========================
+exports.updateStore = (req, res) => {
 
   const userId = req.user.id;
 
-  const query = `
-    SELECT * FROM stores
+  const {
+    name,
+    description
+  } = req.body;
+
+  const logo =
+    req.file
+      ? req.file.filename
+      : null;
+
+  let query = `
+    UPDATE stores
+    SET
+      name = ?,
+      description = ?
+  `;
+
+  const values = [
+    name,
+    description
+  ];
+
+  if (logo) {
+
+    query += `,
+      logo = ?
+    `;
+
+    values.push(logo);
+
+  }
+
+  query += `
     WHERE user_id = ?
   `;
 
-  db.query(query, [userId], (err, result) => {
+  values.push(userId);
 
-    if (err) {
-      return res.status(500).json({
-        message: "Error"
+  db.query(
+    query,
+    values,
+    (err) => {
+
+      if (err) {
+        return res.status(500).json({
+          message: "Error updating store"
+        });
+      }
+
+      res.json({
+        message: "Store updated"
       });
+
     }
-
-    res.json(result[0] || null);
-
-  });
+  );
 
 };

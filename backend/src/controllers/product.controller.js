@@ -244,3 +244,125 @@ exports.deleteProduct = (req, res) => {
   });
 
 };
+
+// ==========================
+// PUBLIC PRODUCTS
+// ==========================
+exports.getPublicProducts = (req, res) => {
+
+  const {
+    search,
+    category
+  } = req.query;
+
+  let query = `
+    SELECT
+      products.*,
+      stores.name AS store_name
+    FROM products
+    JOIN stores
+      ON products.store_id = stores.id
+    WHERE products.status = 'approved'
+  `;
+
+  const values = [];
+
+  // SEARCH
+  if (search) {
+
+    query += `
+      AND products.name LIKE ?
+    `;
+
+    values.push(`%${search}%`);
+
+  }
+
+  // CATEGORY
+  if (category) {
+
+    query += `
+      AND products.category_id = ?
+    `;
+
+    values.push(category);
+
+  }
+
+  query += `
+    ORDER BY products.created_at DESC
+  `;
+
+  db.query(
+    query,
+    values,
+    (err, results) => {
+
+      if (err) {
+
+        return res.status(500).json({
+          message:
+            "Error fetching products"
+        });
+
+      }
+
+      res.json(results);
+
+    }
+  );
+
+};
+
+// ==========================
+// PRODUCT DETAIL
+// ==========================
+exports.getProductDetail = (req, res) => {
+
+  const productId =
+    req.params.id;
+
+  const query = `
+    SELECT
+      products.*,
+      stores.name AS store_name,
+      stores.description AS store_description
+    FROM products
+    JOIN stores
+      ON products.store_id = stores.id
+    WHERE
+      products.id = ?
+      AND products.status = 'approved'
+  `;
+
+  db.query(
+    query,
+    [productId],
+    (err, results) => {
+
+      if (err) {
+
+        return res.status(500).json({
+          message:
+            "Error fetching product"
+        });
+
+      }
+
+      if (
+        results.length === 0
+      ) {
+
+        return res.status(404).json({
+          message:
+            "Product not found"
+        });
+
+      }
+
+      res.json(results[0]);
+
+    }
+  );
+
+};

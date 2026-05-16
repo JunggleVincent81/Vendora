@@ -1,13 +1,50 @@
-const router = require("express").Router();
+const router =
+  require("express").Router();
 
-const controller = require("../controllers/store.controller");
+const controller =
+  require("../controllers/store.controller");
 
-const { verifyToken } = require("../middlewares/auth.middleware");
+const {
+  verifyToken,
+  authorize
+} = require("../middlewares/auth.middleware");
 
-// seller request store
-router.post("/", verifyToken, controller.createStoreRequest);
+const upload =
+  require("../middlewares/upload.middleware");
 
-// get my store
-router.get("/me", verifyToken, controller.getMyStore);
+
+// ==========================
+// CREATE STORE REQUEST
+// ==========================
+router.post(
+  "/",
+  verifyToken,
+  authorize(["seller"]),
+  controller.createStoreRequest
+);
+
+
+// ==========================
+// GET MY STORE
+// ==========================
+router.get(
+  "/my-store",
+  verifyToken,
+  authorize(["seller"]),
+  controller.getMyStore
+);
+
+
+// ==========================
+// UPDATE STORE
+// ==========================
+router.put(
+  "/my-store",
+  verifyToken,
+  authorize(["seller"]),
+  upload.single("logo"),
+  controller.updateStore
+);
+
 
 module.exports = router;

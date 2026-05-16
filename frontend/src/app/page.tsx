@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import Link from "next/link";
 
 import Navbar from "@/components/Navbar";
 import FloatingBlobs from "@/components/FloatingBlobs";
@@ -10,40 +12,202 @@ import ProductCard from "@/components/ProductCard";
 import { api } from "@/services/api";
 
 export default function HomePage() {
-  const [products, setProducts] = useState<any[]>([]);
+
+  const [products, setProducts] =
+    useState<any[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [search, setSearch] =
+    useState("");
+
+  const [selectedCategory, setSelectedCategory] =
+    useState("all");
+
+  const [sortBy, setSortBy] =
+    useState("latest");
+
+  // ==========================
+  // FETCH PRODUCTS
+  // ==========================
+  const fetchProducts = async () => {
+
+    try {
+
+      setLoading(true);
+
+      const res =
+        await api("/products/public");
+
+      if (Array.isArray(res)) {
+
+        setProducts(res);
+
+      }
+
+    } catch (err) {
+
+      console.error(err);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  const fetchProducts = async () => {
-    try {
-      const res = await api("/products");
+  // ==========================
+  // CATEGORIES
+  // ==========================
+  const categories = useMemo(() => {
 
-      if (Array.isArray(res)) {
-        setProducts(res);
+    const unique =
+      Array.from(
+        new Set(
+          products.map(
+            (p) =>
+              p.category ||
+              "Uncategorized"
+          )
+        )
+      );
+
+    return ["all", ...unique];
+
+  }, [products]);
+
+  // ==========================
+  // FILTER + SEARCH + SORT
+  // ==========================
+  const filteredProducts =
+    useMemo(() => {
+
+      let filtered = [...products];
+
+      // SEARCH
+      if (search.trim()) {
+
+        filtered =
+          filtered.filter((product) =>
+            [
+              product.name,
+              product.description,
+              product.store_name
+            ]
+              .join(" ")
+              .toLowerCase()
+              .includes(
+                search.toLowerCase()
+              )
+          );
+
       }
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
-  const addToCart = (product: any) => {
+      // CATEGORY
+      if (
+        selectedCategory !== "all"
+      ) {
+
+        filtered =
+          filtered.filter(
+            (product) =>
+              (product.category ||
+                "Uncategorized") ===
+              selectedCategory
+          );
+
+      }
+
+      // SORT
+      if (sortBy === "price_low") {
+
+        filtered.sort(
+          (a, b) =>
+            Number(a.price) -
+            Number(b.price)
+        );
+
+      }
+
+      if (sortBy === "price_high") {
+
+        filtered.sort(
+          (a, b) =>
+            Number(b.price) -
+            Number(a.price)
+        );
+
+      }
+
+      if (sortBy === "latest") {
+
+        filtered.sort(
+          (a, b) =>
+            new Date(
+              b.created_at
+            ).getTime() -
+            new Date(
+              a.created_at
+            ).getTime()
+        );
+
+      }
+
+      return filtered;
+
+    }, [
+      products,
+      search,
+      selectedCategory,
+      sortBy
+    ]);
+
+  // ==========================
+  // ADD TO CART
+  // ==========================
+  const addToCart = (
+    product: any
+  ) => {
+
     const cart = JSON.parse(
-      localStorage.getItem("cart") || "[]"
+      localStorage.getItem("cart") ||
+        "[]"
     );
 
-    cart.push({
-      product_id: product.id,
-      quantity: 1
-    });
+    const existing =
+      cart.find(
+        (item: any) =>
+          item.product_id === product.id
+      );
+
+    if (existing) {
+
+      existing.quantity += 1;
+
+    } else {
+
+      cart.push({
+        product_id: product.id,
+        quantity: 1
+      });
+
+    }
 
     localStorage.setItem(
       "cart",
       JSON.stringify(cart)
     );
 
-    alert("Product added to cart");
+    alert(
+      `${product.name} added to cart`
+    );
+
   };
 
   return (
@@ -71,24 +235,39 @@ export default function HomePage() {
       {/* HERO */}
       <Hero />
 
-      {/* FEATURED PRODUCTS */}
-      <section className="relative z-10 px-8 pb-28">
+      {/* MARKETPLACE */}
+      <section
+        className="
+        relative z-10
 
-        <div className="max-w-7xl mx-auto">
+        px-6 lg:px-8
+        pb-28
+      "
+      >
 
-          {/* SECTION HEADER */}
+        <div
+          className="
+          max-w-7xl
+          mx-auto
+        "
+        >
+
+          {/* TOP HEADER */}
           <div
             className="
-            flex flex-col lg:flex-row
-            lg:items-end
-            lg:justify-between
+            flex flex-col
+            xl:flex-row
 
-            gap-6
+            xl:items-end
+            xl:justify-between
+
+            gap-10
 
             mb-14
           "
           >
 
+            {/* LEFT */}
             <div>
 
               <div
@@ -104,107 +283,449 @@ export default function HomePage() {
                 bg-white/30
                 backdrop-blur-xl
 
-                text-sm text-zinc-700
+                text-sm
+                text-zinc-700
 
                 shadow-lg
               "
               >
-                Featured Marketplace Products
+                ✨ Curated Marketplace
               </div>
 
-              <h2
+              <h1
                 className="
                 mt-6
 
-                text-4xl lg:text-5xl
+                text-4xl
+                lg:text-6xl
+
+                leading-tight
 
                 font-black
 
                 text-zinc-900
               "
               >
-                Discover Local Marketplace
-              </h2>
+                Discover Products
+                <br />
+                From Local UMKM
+              </h1>
 
               <p
                 className="
-                mt-4
-
-                text-zinc-600
-                text-lg
+                mt-5
 
                 max-w-2xl
+
+                text-lg
+
+                leading-relaxed
+
+                text-zinc-600
               "
               >
-                Explore curated products from local UMKM,
-                village businesses, and independent sellers.
+                Explore modern local commerce —
+                handcrafted products,
+                village businesses,
+                independent creators,
+                and premium UMKM brands.
               </p>
 
             </div>
 
-            {/* VIEW ALL */}
-            <button
+            {/* RIGHT */}
+            <div
               className="
-              self-start
+              flex flex-col
 
-              px-6 py-3
+              gap-4
 
-              rounded-2xl
-
-              border border-white/20
-
-              bg-white/30
-              backdrop-blur-xl
-
-              text-zinc-700
-              font-semibold
-
-              hover:bg-white/40
-
-              transition-all
+              w-full
+              xl:w-auto
             "
             >
-              View All Products
-            </button>
+
+              {/* SEARCH */}
+              <div
+                className="
+                flex items-center gap-3
+
+                rounded-3xl
+
+                border border-white/20
+
+                bg-white/40
+                backdrop-blur-2xl
+
+                px-5 py-4
+
+                shadow-xl
+              "
+              >
+
+                <span className="text-xl">
+                  🔍
+                </span>
+
+                <input
+                  value={search}
+                  onChange={(e) =>
+                    setSearch(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Search products, stores..."
+                  className="
+                  bg-transparent
+
+                  w-full
+                  md:w-[320px]
+
+                  outline-none
+
+                  placeholder:text-zinc-400
+                "
+                />
+
+              </div>
+
+              {/* FILTERS */}
+              <div
+                className="
+                flex flex-wrap
+
+                gap-3
+              "
+              >
+
+                {/* CATEGORY */}
+                <select
+                  value={
+                    selectedCategory
+                  }
+                  onChange={(e) =>
+                    setSelectedCategory(
+                      e.target.value
+                    )
+                  }
+                  className="
+                  px-5 py-4
+
+                  rounded-2xl
+
+                  border border-white/20
+
+                  bg-white/40
+                  backdrop-blur-xl
+
+                  shadow-lg
+
+                  outline-none
+                "
+                >
+
+                  {categories.map(
+                    (category) => (
+
+                      <option
+                        key={category}
+                        value={category}
+                      >
+                        {category}
+                      </option>
+
+                    )
+                  )}
+
+                </select>
+
+                {/* SORT */}
+                <select
+                  value={sortBy}
+                  onChange={(e) =>
+                    setSortBy(
+                      e.target.value
+                    )
+                  }
+                  className="
+                  px-5 py-4
+
+                  rounded-2xl
+
+                  border border-white/20
+
+                  bg-white/40
+                  backdrop-blur-xl
+
+                  shadow-lg
+
+                  outline-none
+                "
+                >
+
+                  <option value="latest">
+                    Latest
+                  </option>
+
+                  <option value="price_low">
+                    Price: Low → High
+                  </option>
+
+                  <option value="price_high">
+                    Price: High → Low
+                  </option>
+
+                </select>
+
+              </div>
+
+            </div>
 
           </div>
 
-          {/* PRODUCT GRID */}
+          {/* MARKETPLACE STATS */}
           <div
             className="
             grid
 
-            grid-cols-1
-            md:grid-cols-2
-            xl:grid-cols-4
+            grid-cols-2
+            lg:grid-cols-4
 
-            gap-8
+            gap-5
+
+            mb-14
           "
           >
 
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAdd={addToCart}
-              />
-            ))}
+            <StatCard
+              label="Products"
+              value={products.length}
+            />
+
+            <StatCard
+              label="Sellers"
+              value="120+"
+            />
+
+            <StatCard
+              label="Transactions"
+              value="12K+"
+            />
+
+            <StatCard
+              label="Growth"
+              value="+320%"
+            />
 
           </div>
+
+          {/* FILTER BAR */}
+          <div
+            className="
+            flex flex-col
+            md:flex-row
+
+            md:items-center
+            md:justify-between
+
+            gap-5
+
+            mb-8
+          "
+          >
+
+            <div
+              className="
+              flex items-center gap-3
+            "
+            >
+
+              <div
+                className="
+                w-3 h-3
+
+                rounded-full
+
+                bg-green-500
+              "
+              />
+
+              <p
+                className="
+                text-zinc-700
+                font-medium
+              "
+              >
+                Showing{" "}
+                <span className="font-black">
+                  {
+                    filteredProducts.length
+                  }
+                </span>{" "}
+                products
+              </p>
+
+            </div>
+
+            <button
+              onClick={fetchProducts}
+              className="
+              px-6 py-3
+
+              rounded-2xl
+
+              bg-gradient-to-r
+              from-orange-500
+              to-amber-500
+
+              text-white
+              font-bold
+
+              shadow-xl
+
+              hover:scale-[1.02]
+
+              transition-all
+            "
+            >
+              Refresh Marketplace
+            </button>
+
+          </div>
+
+          {/* PRODUCTS */}
+          {
+            loading ? (
+
+              <div
+                className="
+                grid
+
+                grid-cols-1
+                md:grid-cols-2
+                xl:grid-cols-4
+
+                gap-8
+              "
+              >
+
+                {
+                  [...Array(8)].map(
+                    (_, i) => (
+
+                      <div
+                        key={i}
+                        className="
+                        h-[430px]
+
+                        rounded-[36px]
+
+                        bg-white/30
+
+                        animate-pulse
+                      "
+                      />
+
+                    )
+                  )
+                }
+
+              </div>
+
+            ) : filteredProducts.length === 0 ? (
+
+              <div
+                className="
+                flex flex-col
+                items-center
+                justify-center
+
+                py-32
+              "
+              >
+
+                <div className="text-8xl">
+                  📦
+                </div>
+
+                <h2
+                  className="
+                  mt-8
+
+                  text-4xl
+
+                  font-black
+                "
+                >
+                  No Products Found
+                </h2>
+
+                <p
+                  className="
+                  mt-4
+
+                  text-zinc-500
+                  text-lg
+                "
+                >
+                  Try changing search or filters.
+                </p>
+
+              </div>
+
+            ) : (
+
+              <div
+                className="
+                grid
+
+                grid-cols-1
+                md:grid-cols-2
+                xl:grid-cols-4
+
+                gap-8
+              "
+              >
+
+                {
+                  filteredProducts.map(
+                    (product) => (
+
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        onAdd={addToCart}
+                      />
+
+                    )
+                  )
+                }
+
+              </div>
+
+            )
+          }
 
         </div>
 
       </section>
 
-      {/* CTA SECTION */}
-      <section className="relative z-10 px-8 pb-32">
+      {/* CTA */}
+      <section
+        className="
+        relative z-10
+
+        px-6 lg:px-8
+        pb-32
+      "
+      >
 
         <div
           className="
           max-w-7xl
           mx-auto
 
-          rounded-[40px]
+          rounded-[48px]
 
           border border-white/20
 
@@ -219,7 +740,16 @@ export default function HomePage() {
         "
         >
 
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div
+            className="
+            grid
+            lg:grid-cols-2
+
+            gap-14
+
+            items-center
+          "
+          >
 
             {/* LEFT */}
             <div>
@@ -246,16 +776,18 @@ export default function HomePage() {
                 className="
                 mt-6
 
-                text-4xl lg:text-6xl
-
-                font-black
+                text-4xl
+                lg:text-6xl
 
                 leading-tight
+
+                font-black
 
                 text-zinc-900
               "
               >
-                Grow Your UMKM With Modern Marketplace
+                Build Your Digital
+                Marketplace Store
               </h2>
 
               <p
@@ -269,14 +801,24 @@ export default function HomePage() {
                 text-zinc-600
               "
               >
-                Bangun toko digital modern untuk bisnis lokal,
-                UMKM desa, dan produk kreatif melalui platform
-                marketplace multi-vendor modern.
+                Create modern digital stores,
+                scale local commerce,
+                and connect directly with
+                customers across Indonesia.
               </p>
 
-              <div className="flex flex-wrap gap-5 mt-10">
+              <div
+                className="
+                flex flex-wrap
 
-                <button
+                gap-5
+
+                mt-10
+              "
+              >
+
+                <Link
+                  href="/register"
                   className="
                   px-8 py-4
 
@@ -297,7 +839,7 @@ export default function HomePage() {
                 "
                 >
                   Start Selling
-                </button>
+                </Link>
 
                 <button
                   className="
@@ -314,21 +856,21 @@ export default function HomePage() {
                   font-semibold
                 "
                 >
-                  Learn More
+                  Explore Marketplace
                 </button>
 
               </div>
 
             </div>
 
-            {/* RIGHT VISUAL */}
+            {/* RIGHT */}
             <div className="relative">
 
               <div
                 className="
                 aspect-square
 
-                rounded-[40px]
+                rounded-[48px]
 
                 bg-gradient-to-br
                 from-orange-200
@@ -339,7 +881,7 @@ export default function HomePage() {
               "
               />
 
-              {/* FLOATING CARD */}
+              {/* FLOAT CARD */}
               <div
                 className="
                 absolute
@@ -356,11 +898,16 @@ export default function HomePage() {
 
                 shadow-2xl
 
-                px-6 py-5
+                px-7 py-6
               "
               >
 
-                <p className="text-sm text-zinc-500">
+                <p
+                  className="
+                  text-sm
+                  text-zinc-500
+                "
+                >
                   Marketplace Revenue Growth
                 </p>
 
@@ -368,7 +915,7 @@ export default function HomePage() {
                   className="
                   mt-2
 
-                  text-4xl
+                  text-5xl
 
                   font-black
 
@@ -389,5 +936,56 @@ export default function HomePage() {
       </section>
 
     </main>
+  );
+}
+
+/* ==========================
+   STAT CARD
+========================== */
+function StatCard({
+  label,
+  value
+}: any) {
+
+  return (
+    <div
+      className="
+      rounded-[30px]
+
+      border border-white/20
+
+      bg-white/30
+      backdrop-blur-2xl
+
+      p-6
+
+      shadow-xl
+    "
+    >
+
+      <p
+        className="
+        text-zinc-500
+        font-medium
+      "
+      >
+        {label}
+      </p>
+
+      <h3
+        className="
+        mt-3
+
+        text-4xl
+
+        font-black
+
+        text-zinc-900
+      "
+      >
+        {value}
+      </h3>
+
+    </div>
   );
 }
