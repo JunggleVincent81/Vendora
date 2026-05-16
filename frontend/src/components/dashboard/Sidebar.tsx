@@ -20,14 +20,14 @@ const menus = [
     icon: "📦"
   },
   {
+    name: "Orders",
+    href: "/dashboard/seller/orders",
+    icon: "🛒"
+  },
+  {
     name: "Analytics",
     href: "/dashboard/seller/analytics",
     icon: "📊"
-  },
-  {
-    name: "Customers",
-    href: "/dashboard/seller/customers",
-    icon: "👥"
   },
   {
     name: "Settings",

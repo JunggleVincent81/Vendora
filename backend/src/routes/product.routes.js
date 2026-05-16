@@ -1,5 +1,6 @@
 const express = require("express");
 const upload = require("../config/multer");
+const verifiedSeller = require("../middlewares/verifiedSeller.middleware");
 const router = express.Router();
 
 const controller = require("../controllers/product.controller");
@@ -18,6 +19,7 @@ router.post(
     "/",
     verifyToken,
     authorize(["seller"]),
+    verifiedSeller,
     upload.single("image"),
     controller.createProduct
   );
@@ -34,6 +36,19 @@ router.delete(
   verifyToken,
   authorize(["seller"]),
   controller.deleteProduct
+);
+
+// ==========================
+// PUBLIC PRODUCTS
+// ==========================
+router.get(
+  "/public",
+  controller.getPublicProducts
+);
+
+router.get(
+  "/public/:id",
+  controller.getProductDetail
 );
 
 module.exports = router;

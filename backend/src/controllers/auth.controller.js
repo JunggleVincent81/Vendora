@@ -40,6 +40,32 @@ exports.login = (req, res) => {
 
     const user = results[0];
 
+    // suspended
+if (
+  user.status ===
+  "suspended"
+) {
+
+  return res.status(403).json({
+    message:
+      "Account suspended"
+  });
+
+}
+
+// banned
+if (
+  user.status ===
+  "banned"
+) {
+
+  return res.status(403).json({
+    message:
+      "Account banned"
+  });
+
+}
+
     const isMatch = bcrypt.compareSync(
       password,
       user.password
